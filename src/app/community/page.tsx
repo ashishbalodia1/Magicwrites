@@ -76,6 +76,7 @@ export default function CommunityPage() {
     try {
       const res = await fetch('/api/writings?limit=20')
       const data = await res.json()
+      console.log('Fetched writings:', data.writings?.length || 0, 'items')
       setWritings(data.writings || [])
     } catch (error) {
       console.error('Failed to fetch writings:', error)
