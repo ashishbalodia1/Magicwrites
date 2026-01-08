@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Send, Hash, Users, MessageCircle, TrendingUp, Sparkles, Heart, Bookmark, PenSquare, Share2, Eye, X, Feather } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Send, Hash, Users, MessageCircle, TrendingUp, Sparkles, Heart, Bookmark } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatDate } from '@/lib/utils'
@@ -49,9 +49,6 @@ export default function CommunityPage() {
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set())
-  const [savedPosts, setSavedPosts] = useState<Set<string>>(new Set())
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
 
@@ -122,57 +119,6 @@ export default function CommunityPage() {
     }
   }
 
-  const handleLike = async (writingId: string) => {
-    if (!user) return
-    
-    try {
-      const res = await fetch(`/api/writings/${writingId}/like`, { method: 'POST' })
-      if (res.ok) {
-        const data = await res.json()
-        if (data.liked) {
-          setLikedPosts(new Set([...likedPosts, writingId]))
-        } else {
-          const newLiked = new Set(likedPosts)
-          newLiked.delete(writingId)
-          setLikedPosts(newLiked)
-        }
-        // Refresh writings to update counts
-        fetchWritings()
-      }
-    } catch (error) {
-      console.error('Failed to like:', error)
-    }
-  }
-
-  const handleSave = (writingId: string) => {
-    if (savedPosts.has(writingId)) {
-      const newSaved = new Set(savedPosts)
-      newSaved.delete(writingId)
-      setSavedPosts(newSaved)
-    } else {
-      setSavedPosts(new Set([...savedPosts, writingId]))
-    }
-  }
-
-  const handleShare = async (writing: Writing) => {
-    const url = `${window.location.origin}/writings/${writing.slug}`
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: writing.title,
-          text: writing.excerpt,
-          url: url
-        })
-      } catch (error) {
-        // User cancelled or error
-      }
-    } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(url)
-      alert('Link copied to clipboard!')
-    }
-  }
-
   return (
     <div className="min-h-screen pt-20 pb-16 bg-gradient-to-b from-neutral-950 via-neutral-900 to-neutral-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -193,42 +139,30 @@ export default function CommunityPage() {
               </p>
             </div>
 
-            {/* Tab Switcher & Actions */}
-            <div className="flex items-center gap-3">
-              <div className="flex bg-neutral-900 rounded-xl p-1 border border-neutral-800">
-                <button
-                  onClick={() => setActiveTab('feed')}
-                  className={`px-6 py-3 rounded-lg font-semibold transition-all flex items-center space-x-2 ${
-                    activeTab === 'feed'
-                      ? 'bg-[#FFED4E] text-black'
-                      : 'text-neutral-400 hover:text-white'
-                  }`}
-                >
-                  <TrendingUp size={20} />
-                  <span>Feed</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('chat')}
-                  className={`px-6 py-3 rounded-lg font-semibold transition-all flex items-center space-x-2 ${
-                    activeTab === 'chat'
-                      ? 'bg-[#FFED4E] text-black'
-                      : 'text-neutral-400 hover:text-white'
-                  }`}
-                >
-                  <MessageCircle size={20} />
-                  <span>Chat</span>
-                </button>
-              </div>
-              
-              {user && activeTab === 'feed' && (
-                <button
-                  onClick={() => setShowCreateModal(true)}
-                  className="px-6 py-3 bg-gradient-to-r from-[#FFED4E] to-yellow-500 text-black font-bold rounded-xl hover:shadow-lg hover:shadow-[#FFED4E]/30 transition-all flex items-center space-x-2"
-                >
-                  <PenSquare size={20} />
-                  <span>Create</span>
-                </button>
-              )}
+            {/* Tab Switcher */}
+            <div className="flex bg-neutral-900 rounded-xl p-1 border border-neutral-800">
+              <button
+                onClick={() => setActiveTab('feed')}
+                className={`px-6 py-3 rounded-lg font-semibold transition-all flex items-center space-x-2 ${
+                  activeTab === 'feed'
+                    ? 'bg-[#FFED4E] text-black'
+                    : 'text-neutral-400 hover:text-white'
+                }`}
+              >
+                <TrendingUp size={20} />
+                <span>Feed</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('chat')}
+                className={`px-6 py-3 rounded-lg font-semibold transition-all flex items-center space-x-2 ${
+                  activeTab === 'chat'
+                    ? 'bg-[#FFED4E] text-black'
+                    : 'text-neutral-400 hover:text-white'
+                }`}
+              >
+                <MessageCircle size={20} />
+                <span>Chat</span>
+              </button>
             </div>
           </motion.div>
         </div>
@@ -293,56 +227,15 @@ export default function CommunityPage() {
                         <div className="flex flex-wrap gap-2">
                           {writing.genre && (
                             <span className="px-3 py-1 bg-neutral-800 text-neutral-300 text-xs rounded-full">
-                              {writing.genre}justify-between text-neutral-400 text-sm border-t border-neutral-800 pt-4">
-                      <div className="flex items-center space-x-4">
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault()
-                            handleLike(writing.id)
-                          }}
-                          disabled={!user}
-                          className="flex items-center space-x-1 hover:text-red-400 transition-colors disabled:opacity-50 group"
-                        >
-                          <Heart 
-                            size={18} 
-                            fill={likedPosts.has(writing.id) ? 'currentColor' : 'none'} 
-                            className={likedPosts.has(writing.id) ? 'text-red-400' : 'group-hover:scale-110 transition-transform'} 
-                          />
-                          <span className="font-medium">{writing._count.likes}</span>
-                        </button>
-                        
-                        <Link 
-                          href={`/writings/${writing.slug}#reflections`} 
-                          className="flex items-center space-x-1 hover:text-[#FFED4E] transition-colors group"
-                        >
-                          <MessageCircle size={18} className="group-hover:scale-110 transition-transform" />
-                          <span className="font-medium">{writing._count.reflections}</span>
-                        </Link>
-                        
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault()
-                            handleShare(writing)
-                          }}
-                          className="flex items-center space-x-1 hover:text-[#FFED4E] transition-colors group"
-                        >
-                          <Share2 size={18} className="group-hover:scale-110 transition-transform" />
-                        </button>
-                      </div>
-                      
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault()
-                          handleSave(writing.id)
-                        }}
-                        className="hover:text-[#FFED4E] transition-colors group"
-                      >
-                        <Bookmark 
-                          size={18} 
-                          fill={savedPosts.has(writing.id) ? 'currentColor' : 'none'} 
-                          className={`${savedPosts.has(writing.id) ? 'text-[#FFED4E]' : ''} group-hover:scale-110 transition-transform`}
-                        />
-                      </buttoniv>
+                              {writing.genre}
+                            </span>
+                          )}
+                          {writing.mood && (
+                            <span className="px-3 py-1 bg-neutral-800 text-neutral-300 text-xs rounded-full">
+                              {writing.mood}
+                            </span>
+                          )}
+                        </div>
                       )}
                     </Link>
 
@@ -420,70 +313,6 @@ export default function CommunityPage() {
                       </div>
                     </motion.div>
                   ))
-
-      {/* Create Post Modal */}
-      <AnimatePresence>
-        {showCreateModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setShowCreateModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="bg-gradient-to-br from-neutral-900 to-neutral-800 rounded-2xl border border-[#FFED4E]/20 shadow-2xl shadow-[#FFED4E]/10 max-w-2xl w-full max-h-[80vh] overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-6 border-b border-neutral-800 flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FFED4E] to-yellow-600 flex items-center justify-center">
-                    <Feather className="w-6 h-6 text-black" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-serif font-bold text-white">Create New Writing</h3>
-                    <p className="text-sm text-neutral-400">Share your thoughts with the community</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowCreateModal(false)}
-                  className="text-neutral-400 hover:text-white transition-colors p-2 hover:bg-neutral-800 rounded-lg"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-              
-              <div className="p-8 text-center">
-                <Sparkles className="w-16 h-16 text-[#FFED4E] mx-auto mb-6" />
-                <h4 className="text-2xl font-serif font-bold text-white mb-4">
-                  Use Our Premium Writing Studio
-                </h4>
-                <p className="text-neutral-300 mb-8 text-lg">
-                  Create your masterpiece with our full-featured writing editor, complete with formatting tools, mood settings, and genre selection.
-                </p>
-                <div className="flex items-center justify-center gap-4">
-                  <button
-                    onClick={() => setShowCreateModal(false)}
-                    className="px-6 py-3 bg-neutral-800 text-white font-semibold rounded-xl hover:bg-neutral-700 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <Link
-                    href="/write"
-                    className="px-8 py-3 bg-gradient-to-r from-[#FFED4E] to-yellow-500 text-black font-bold rounded-xl hover:shadow-lg hover:shadow-[#FFED4E]/30 transition-all flex items-center space-x-2"
-                  >
-                    <PenSquare size={20} />
-                    <span>Go to Writing Studio</span>
-                  </Link>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
                 )}
                 <div ref={messagesEndRef} />
               </div>
