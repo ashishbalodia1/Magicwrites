@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
-import { Heart, MessageCircle, Bookmark, Sparkles, TrendingUp, Users, Feather, ChevronRight } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Heart, MessageCircle, Bookmark, Sparkles, TrendingUp, Users, Feather, ChevronRight, Star, Award, Zap } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatDate } from '@/lib/utils'
@@ -36,6 +36,8 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true)
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set())
   const [savedPosts, setSavedPosts] = useState<Set<string>>(new Set())
+  const [showToast, setShowToast] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
 
   useEffect(() => {
     fetchWritings()
@@ -57,7 +59,10 @@ export default function HomePage() {
   }
 
   const handleLike = async (writingId: string) => {
-    if (!user) return
+    if (!user) {
+      showToastMessage('Please sign in to like writings')
+      return
+    }
     
     try {
       const res = await fetch(`/api/writings/${writingId}/like`, { method: 'POST' })
@@ -65,11 +70,13 @@ export default function HomePage() {
         const data = await res.json()
         if (data.liked) {
           setLikedPosts(new Set([...likedPosts, writingId]))
+          showToastMessage('Added to your favorites ❤️')
         } else {
           const newLiked = new Set(likedPosts)
           newLiked.delete(writingId)
           setLikedPosts(newLiked)
         }
+        fetchWritings()
       }
     } catch (error) {
       console.error('Failed to like:', error)
@@ -81,9 +88,17 @@ export default function HomePage() {
       const newSaved = new Set(savedPosts)
       newSaved.delete(writingId)
       setSavedPosts(newSaved)
+      showToastMessage('Removed from saved')
     } else {
       setSavedPosts(new Set([...savedPosts, writingId]))
+      showToastMessage('Saved for later 📚')
     }
+  }
+
+  const showToastMessage = (message: string) => {
+    setToastMessage(message)
+    setShowToast(true)
+    setTimeout(() => setShowToast(false), 3000)
   }
 
   return (
@@ -99,17 +114,18 @@ export default function HomePage() {
             transition={{ duration: 0.8 }}
             className="text-center mb-16"
           >
-            <div className="inline-flex items-center space-x-2 mb-6 px-4 py-2 bg-[#FFED4E]/10 border border-[#FFED4E]/30 rounded-full">
+            <div className="inline-flex items-center space-x-2 mb-6 px-5 py-2.5 bg-gradient-to-r from-[#FFED4E]/20 to-yellow-500/20 border border-[#FFED4E]/40 rounded-full shadow-lg shadow-[#FFED4E]/10">
+              <Award className="w-5 h-5 text-[#FFED4E]" />
+              <span className="text-[#FFED4E] text-sm font-bold tracking-wide">PREMIUM WRITERS COMMUNITY</span>
               <Sparkles className="w-4 h-4 text-[#FFED4E]" />
-              <span className="text-[#FFED4E] text-sm font-medium">A Sanctuary for Writers</span>
             </div>
             
-            <h1 className="text-5xl md:text-7xl font-serif font-bold mb-6 bg-gradient-to-r from-white via-[#FFED4E] to-white bg-clip-text text-transparent">
-              Where Words Find Their Voice
+            <h1 className="text-5xl md:text-7xl font-serif font-bold mb-6 bg-gradient-to-r from-white via-[#FFED4E] to-white bg-clip-text text-transparent leading-tight">
+              Where Words Become Legacy
             </h1>
             
-            <p className="text-xl text-neutral-400 max-w-2xl mx-auto mb-8">
-              Join a judgment-free community of writers sharing their stories, poetry, and thoughts
+            <p className="text-xl md:text-2xl text-neutral-300 max-w-2xl mx-auto mb-8 font-light">
+              Join an <span className="text-[#FFED4E] font-semibold">exclusive community</span> of writers crafting stories that matter
             </p>
 
             {!user && (
@@ -132,23 +148,32 @@ export default function HomePage() {
             transition={{ delay: 0.3, duration: 0.6 }}
             className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto"
           >
-            <div className="bg-neutral-900/50 backdrop-blur-sm border border-neutral-800 rounded-2xl p-6 text-center">
+            <motion.div 
+              whileHover={{ scale: 1.05, y: -5 }}
+              className="bg-gradient-to-br from-neutral-900 to-neutral-800 backdrop-blur-sm border border-[#FFED4E]/20 rounded-2xl p-6 text-center shadow-lg hover:shadow-[#FFED4E]/20 transition-all"
+            >
               <Users className="w-8 h-8 text-[#FFED4E] mx-auto mb-3" />
-              <div className="text-3xl font-bold text-white mb-1">Writers</div>
-              <div className="text-neutral-400 text-sm">Creative Community</div>
-            </div>
+              <div className="text-3xl font-bold text-white mb-1">Elite</div>
+              <div className="text-neutral-300 text-sm font-medium">Writers Community</div>
+            </motion.div>
             
-            <div className="bg-neutral-900/50 backdrop-blur-sm border border-neutral-800 rounded-2xl p-6 text-center">
+            <motion.div 
+              whileHover={{ scale: 1.05, y: -5 }}
+              className="bg-gradient-to-br from-neutral-900 to-neutral-800 backdrop-blur-sm border border-[#FFED4E]/20 rounded-2xl p-6 text-center shadow-lg hover:shadow-[#FFED4E]/20 transition-all"
+            >
               <Feather className="w-8 h-8 text-[#FFED4E] mx-auto mb-3" />
               <div className="text-3xl font-bold text-white mb-1">{loading ? '...' : writings.length + (featuredWriting ? 1 : 0)}</div>
-              <div className="text-neutral-400 text-sm">Published Works</div>
-            </div>
+              <div className="text-neutral-300 text-sm font-medium">Published Works</div>
+            </motion.div>
             
-            <div className="bg-neutral-900/50 backdrop-blur-sm border border-neutral-800 rounded-2xl p-6 text-center">
+            <motion.div 
+              whileHover={{ scale: 1.05, y: -5 }}
+              className="bg-gradient-to-br from-neutral-900 to-neutral-800 backdrop-blur-sm border border-[#FFED4E]/20 rounded-2xl p-6 text-center shadow-lg hover:shadow-[#FFED4E]/20 transition-all"
+            >
               <TrendingUp className="w-8 h-8 text-[#FFED4E] mx-auto mb-3" />
-              <div className="text-3xl font-bold text-white mb-1">Growing</div>
-              <div className="text-neutral-400 text-sm">Active Readers</div>
-            </div>
+              <div className="text-3xl font-bold text-white mb-1">100%</div>
+              <div className="text-neutral-300 text-sm font-medium">Quality Content</div>
+            </motion.div>
           </motion.div>
         </div>
       </section>
@@ -173,9 +198,11 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6, duration: 0.6 }}
-              className="relative bg-gradient-to-br from-neutral-900 to-neutral-800 rounded-3xl overflow-hidden border border-[#FFED4E]/20 shadow-2xl shadow-[#FFED4E]/10 hover:shadow-[#FFED4E]/20 transition-all duration-500"
+              whileHover={{ scale: 1.01 }}
+              className="relative bg-gradient-to-br from-neutral-900 to-neutral-800 rounded-3xl overflow-hidden border border-[#FFED4E]/30 shadow-2xl shadow-[#FFED4E]/20 hover:shadow-[#FFED4E]/30 transition-all duration-500 group"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-[#FFED4E]/5 to-transparent opacity-50" />
+              <div className="absolute inset-0 bg-gradient-to-br from-[#FFED4E]/10 to-transparent opacity-50 group-hover:opacity-70 transition-opacity" />
+              <div className="absolute top-0 right-0 w-64 h-64 bg-[#FFED4E]/5 rounded-full blur-3xl" />
               
               <div className="relative p-8 md:p-12">
                 {/* Author Info */}
@@ -289,7 +316,8 @@ export default function HomePage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1, duration: 0.5 }}
-                  className="bg-neutral-900 rounded-2xl overflow-hidden border border-neutral-800 hover:border-[#FFED4E]/30 transition-all duration-300 hover:shadow-lg hover:shadow-[#FFED4E]/10"
+                    whileHover={{ y: -8, scale: 1.02 }}
+                    className="bg-neutral-900 rounded-2xl overflow-hidden border border-neutral-800 hover:border-[#FFED4E]/50 transition-all duration-300 hover:shadow-xl hover:shadow-[#FFED4E]/20 group"
                 >
                   {/* Author */}
                   <div className="p-4 border-b border-neutral-800">
@@ -335,26 +363,32 @@ export default function HomePage() {
 
                   {/* Actions */}
                   <div className="px-6 pb-4 flex items-center justify-between text-neutral-400 text-sm">
-                    <button
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
                       onClick={() => handleLike(writing.id)}
                       disabled={!user}
-                      className="flex items-center space-x-1 hover:text-red-400 transition-colors disabled:opacity-50"
+                      className="flex items-center space-x-1 hover:text-red-400 transition-colors disabled:opacity-50 group"
                     >
                       <Heart size={16} fill={likedPosts.has(writing.id) ? 'currentColor' : 'none'} className={likedPosts.has(writing.id) ? 'text-red-400' : ''} />
-                      <span>{writing._count.likes}</span>
-                    </button>
+                      <span className="font-medium">{writing._count.likes}</span>
+                    </motion.button>
                     
-                    <Link href={`/writings/${writing.slug}#reflections`} className="flex items-center space-x-1 hover:text-[#FFED4E] transition-colors">
-                      <MessageCircle size={16} />
-                      <span>{writing._count.reflections}</span>
+                    <Link href={`/writings/${writing.slug}#reflections`} className="flex items-center space-x-1 hover:text-[#FFED4E] transition-colors group">
+                      <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                        <MessageCircle size={16} />
+                      </motion.div>
+                      <span className="font-medium">{writing._count.reflections}</span>
                     </Link>
                     
-                    <button
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
                       onClick={() => handleSave(writing.id)}
                       className="hover:text-[#FFED4E] transition-colors"
                     >
                       <Bookmark size={16} fill={savedPosts.has(writing.id) ? 'currentColor' : 'none'} className={savedPosts.has(writing.id) ? 'text-[#FFED4E]' : ''} />
-                    </button>
+                    </motion.button>
                   </div>
                 </motion.article>
               ))}
@@ -391,6 +425,21 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {showToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            className="fixed bottom-8 right-8 bg-gradient-to-r from-neutral-900 to-neutral-800 text-white px-6 py-4 rounded-2xl shadow-2xl shadow-[#FFED4E]/20 border border-[#FFED4E]/30 z-50 flex items-center space-x-3"
+          >
+            <Zap className="w-5 h-5 text-[#FFED4E]" />
+            <span className="font-medium">{toastMessage}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
