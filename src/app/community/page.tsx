@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Send, Hash, Users, MessageCircle, TrendingUp, Sparkles, Heart, Bookmark } from 'lucide-react'
+import { Send, Hash, Users, MessageCircle, TrendingUp, Sparkles, Heart, Bookmark, PenSquare } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatDate } from '@/lib/utils'
@@ -66,12 +66,10 @@ export default function CommunityPage() {
     return () => clearInterval(interval)
   }, [activeTab])
 
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages])
-
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (activeTab === 'chat') {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
   }
 
   const fetchWritings = async () => {
@@ -139,30 +137,42 @@ export default function CommunityPage() {
               </p>
             </div>
 
-            {/* Tab Switcher */}
-            <div className="flex bg-neutral-900 rounded-xl p-1 border border-neutral-800">
-              <button
-                onClick={() => setActiveTab('feed')}
-                className={`px-6 py-3 rounded-lg font-semibold transition-all flex items-center space-x-2 ${
-                  activeTab === 'feed'
-                    ? 'bg-[#FFED4E] text-black'
-                    : 'text-neutral-400 hover:text-white'
-                }`}
-              >
-                <TrendingUp size={20} />
-                <span>Feed</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('chat')}
-                className={`px-6 py-3 rounded-lg font-semibold transition-all flex items-center space-x-2 ${
-                  activeTab === 'chat'
-                    ? 'bg-[#FFED4E] text-black'
-                    : 'text-neutral-400 hover:text-white'
-                }`}
-              >
-                <MessageCircle size={20} />
-                <span>Chat</span>
-              </button>
+            {/* Tab Switcher & Create Button */}
+            <div className="flex items-center gap-3">
+              <div className="flex bg-neutral-900 rounded-xl p-1 border border-neutral-800">
+                <button
+                  onClick={() => setActiveTab('feed')}
+                  className={`px-6 py-3 rounded-lg font-semibold transition-all flex items-center space-x-2 ${
+                    activeTab === 'feed'
+                      ? 'bg-[#FFED4E] text-black'
+                      : 'text-neutral-400 hover:text-white'
+                  }`}
+                >
+                  <TrendingUp size={20} />
+                  <span>Feed</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('chat')}
+                  className={`px-6 py-3 rounded-lg font-semibold transition-all flex items-center space-x-2 ${
+                    activeTab === 'chat'
+                      ? 'bg-[#FFED4E] text-black'
+                      : 'text-neutral-400 hover:text-white'
+                  }`}
+                >
+                  <MessageCircle size={20} />
+                  <span>Chat</span>
+                </button>
+              </div>
+              
+              {user && activeTab === 'feed' && (
+                <Link
+                  href="/write"
+                  className="px-6 py-3 bg-gradient-to-r from-[#FFED4E] to-yellow-500 text-black font-bold rounded-xl hover:shadow-lg hover:shadow-[#FFED4E]/30 transition-all flex items-center space-x-2"
+                >
+                  <PenSquare size={20} />
+                  <span>Create</span>
+                </Link>
+              )}
             </div>
           </motion.div>
         </div>
