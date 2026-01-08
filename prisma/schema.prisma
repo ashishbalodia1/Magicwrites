@@ -25,6 +25,7 @@ model User {
   reflections   Reflection[]
   likes         Like[]
   reposts       Repost[]
+  messages      Message[]
 }
 
 model Writing {
@@ -97,4 +98,17 @@ model Repost {
   @@unique([writingId, userId])
   @@index([writingId])
   @@index([userId])
+}
+
+model Message {
+  id            String    @id @default(cuid())
+  content       String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([createdAt])
 }
